@@ -93,6 +93,22 @@ for app in "${casks[@]}"; do
     fi
 done
 
+# Check for ~/go/bin on $PATH
+check_go_path() {
+    if ! echo "$PATH" |grep -q "$USER/go/bin"; then
+        if [[ "$SHELL" == "/bin/zsh" ]]; then
+            echo 'export PATH="$PATH:$HOME/go/bin"' >> ~/.zshrc
+            echo 'Added ~/go/bin to your $PATH. Reopen your terminal or run source ~/.zshrc when this script completes'
+        else
+            echo 'export PATH="$PATH:$HOME/go/bin"' >> ~/.bashrc
+            echo 'Added ~/go/bin to your $PATH. Reopen your terminal or run source ~/.bashrc when this script completes'
+        fi
+    else
+        echo "Already found $HOME/go/bin on path"
+    fi
+}
+
 install_docker_desktop
+check_go_path
 
 echo "All tools including Docker installed or reinstalled successfully!"
