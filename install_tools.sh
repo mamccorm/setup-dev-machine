@@ -56,10 +56,36 @@ else
     echo "XCode Command Line Tools already installed."
 fi
 
+# Installs Homebrew and adds it to the path based on what homebrew recommends
+SHELL_PROFILE=""
+function install_homebrew() {
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    case "${SHELL}" in
+      */zsh*) SHELL_PROFILE="${ZDOTDIR:-${HOME}}/.zprofile" ;;
+      */bash*) SHELL_PROFILE="${HOME}/.bash_profile" ;;
+      *) SHELL_PROFILE="${HOME}/.profile" ;;
+    esac
+    if ! grep -qs 'brew shellenv' "${SHELL_PROFILE}"; then
+      echo >> "${SHELL_PROFILE}"
+      echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> "${SHELL_PROFILE}"
+      echo "Added Homebrew to PATH in ${SHELL_PROFILE}"
+    fi
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+}
+
+# Displaying a message to source the ~/.*profile. This is called at the end of the script to make sure it does not get lost in the noise.
+function notify_brew_init(){
+    # $SHELL_PROFILE is only initialized when homebrew is installed.
+    if [[ -n "${SHELL_PROFILE}" ]]; then
+      display_path="${SHELL_PROFILE/#$HOME/~}"
+      echo "Added homebrew to your ${display_path}. Reopen your terminal or run source ${display_path} when this script completes."
+    fi
+}
+
 # Check for Homebrew and install if not found
 if ! command -v brew &>/dev/null; then
     echo "Homebrew not found. Installing..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    install_homebrew
 else
     echo "Homebrew already installed."
     echo "Updating Homebrew..."
@@ -110,5 +136,6 @@ check_go_path() {
 
 install_docker_desktop
 check_go_path
+notify_brew_init
 
 echo "All tools including Docker installed or reinstalled successfully!"
